@@ -12,6 +12,7 @@ The slides are extracted from the swf-file and converted to a regular Videofile 
 
 Inputfile will default to `input.zip`. Output directory will default to `output/`. Additionally the following environment variables can be used to modify the behaviour:
 
+* `SEPARATE_AUDIO`: Extract audio stream only to a separate audiofile or include in presenter videofile. Values are `yes` or `no`. Defaults to `yes`.
 * `X264_PRESET`: Preset for the video encoding using libx264. Defaults to `slow`. 
 * `WORKDIR`: Extraction of input file, slides and metadata will take place here. Defaults to a fresh temporary directory created by `mktemp`. **ATTENTION:** This directory will be deleted entirely after the conversion is finished.
 
