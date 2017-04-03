@@ -15,6 +15,7 @@
 
 INPUT_FILE=${1:-input.zip}
 DESTINATION=${2:-$(pwd)/output}
+SEPARATE_AUDIO=${SEPARATE_AUDIO:-yes}
 X264_PRESET=${X264_PRESET:-slow}
 WORKDIR=${WORKDIR:-$(mktemp -d)}
 
@@ -89,13 +90,25 @@ l2o::stitchslides () {
 
 l2o::convertvideo () {
   log::info "converting presenter video"
+  
+  if [[ "${SEPARATE_AUDIO}" = "yes" ]] ; then
+    log::info "audio should be separate, do not include in videofile"
+    local AUDIO_OPT=" -an "
+  else
+    local AUDIO_OPT=" -c:a aac "
+  fi
+  
   local pattern="${DIR_INPUT}/*.flv"
   local found=( ${pattern} )
   local videofile="${found[0]}"
-  ffmpeg -y -loglevel error -i ${videofile} -c:v libx264 -preset ${X264_PRESET} -tune film -profile baseline -c:a aac "${DESTINATION}/presenter.mp4"
+  ffmpeg -y -loglevel error -i ${videofile} -c:v libx264 -preset ${X264_PRESET} -tune film -profile baseline ${AUDIO_OPT} "${DESTINATION}/presenter.mp4"
 }
 
 l2o::extractaudio () {
+  if [[ "${SEPARATE_AUDIO}" = "no" ]] ; then
+    log::info "audio is already included in videofile, skip separate extraction"
+    return 0
+  fi
   log::info "extracting presenter audio"
   local pattern="${DIR_INPUT}/*.flv"
   local found=( ${pattern} )
