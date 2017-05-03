@@ -85,7 +85,7 @@ l2o::stitchslides () {
   done
 
   log::info "stitching presentation video"
-  ffmpeg -y -loglevel error -f concat -i "${DIR_SLIDES}/slides.ffconcat" -c:v libx264 -pix_fmt yuv420p -tune stillimage -preset ${X264_PRESET} -profile baseline "${DESTINATION}/presentation.mp4"
+  ffmpeg -y -loglevel error -f concat -i "${DIR_SLIDES}/slides.ffconcat" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -tune stillimage -preset ${X264_PRESET} -profile baseline "${DESTINATION}/presentation.mp4"
 }
 
 l2o::convertvideo () {
