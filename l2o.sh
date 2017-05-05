@@ -66,7 +66,7 @@ l2o::extractslides () {
   for i in "${!slide_numbers[@]}" ; do
     swfextract -p ${slide_numbers[i]} -o ${DIR_SLIDES}/${i}.png ${slidefile}
   done
-  NUM_SLIDES=$(( ${#slide_numbers[@]} - 1 ))
+  NUM_SLIDES=$(( ${#slide_numbers[@]} ))
 }
 
 l2o::stitchslides () {
