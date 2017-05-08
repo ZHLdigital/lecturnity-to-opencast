@@ -74,6 +74,7 @@ l2o::stitchslides () {
   log::info "inspecting slide metadata"
   l2o::util::requirefile "${DIR_INPUT}/document.lmd"
   echo "ffconcat version 1.0" > ${DIR_SLIDES}/slides.ffconcat
+  local PRESENTATION_TOTAL_LENGTH=0
   for (( i=0; i < $NUM_SLIDES; i += 1)) ; do
     # document.lmd is a xml-file, so we can query it comfortably.
     local SLIDE_BEGIN=$(xmlstarlet sel -t -m "/docinfo/structure/chapter/page[$(( $i + 1 ))]/begin" -v . -n ${DIR_INPUT}/document.lmd)
@@ -82,10 +83,18 @@ l2o::stitchslides () {
     local SLIDE_DURATION=$(echo "scale=3; x=(${SLIDE_END} - ${SLIDE_BEGIN})/1000; if(x<1) print 0; x" | bc -l)
     echo "file ${i}.png" >> ${DIR_SLIDES}/slides.ffconcat
     echo "duration ${SLIDE_DURATION}" >> ${DIR_SLIDES}/slides.ffconcat
+    PRESENTATION_TOTAL_LENGTH=$( echo "$PRESENTATION_TOTAL_LENGTH + $SLIDE_DURATION" | bc -l)
+    echo "slide $i from $SLIDE_BEGIN to $SLIDE_END for $SLIDE_DURATION. Total length is $PRESENTATION_TOTAL_LENGTH"
   done
-
+  # ffmpeg has a very weird concat bug where the length of the last slide sometims is completely random.
+  # to work around this, add another slide with one second length. this might turn out to be one second,
+  # or maybe 10 minutes in the final video. in the second step we will cut the video to the proper length.
+  echo "file 0.png" >> ${DIR_SLIDES}/slides.ffconcat
+  echo "duration 1.000" >> ${DIR_SLIDES}/slides.ffconcat
   log::info "stitching presentation video"
-  ffmpeg -y -loglevel error -f concat -i "${DIR_SLIDES}/slides.ffconcat" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -tune stillimage -preset ${X264_PRESET} -profile baseline "${DESTINATION}/presentation.mp4"
+  ffmpeg -y -loglevel error -f concat -segment_time_metadata 1 -i "${DIR_SLIDES}/slides.ffconcat" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p -tune stillimage -preset ${X264_PRESET} -profile baseline "${DIR_SLIDES}/presentation_uncut.mp4"
+  ffmpeg -y -loglevel error -i "${DIR_SLIDES}/presentation_uncut.mp4" -c copy -t $PRESENTATION_TOTAL_LENGTH "${DESTINATION}/presentation.mp4"
+
 }
 
 l2o::convertvideo () {
